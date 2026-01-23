@@ -1,0 +1,64 @@
+[package]
+name = "quanta_rust_engine"
+version = "0.1.0"
+edition = "2021"
+authors = ["quantA Team"]
+description = "High-performance backtesting engine for quantA trading system"
+license = "MIT"
+
+[lib]
+name = "quanta_rust_engine"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# PyO3 for Python bindings
+pyo3 = { version = "0.20", features = ["extension-module", "abi3-py39"] }
+pyo3-built = "0.4"
+
+# Numerical computing
+numpy = "0.20"
+ndarray = { version = "0.15", features = ["rayon"] }
+
+# Parallel processing
+rayon = "1.8"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Logging
+log = "0.4"
+env_logger = "0.11"
+
+# Date and time
+chrono = "0.4"
+
+# Async runtime (for future use)
+tokio = { version = "1.35", features = ["full"] }
+
+# Performance
+cached = "0.46"
+
+[build-dependencies]
+built = "0.7"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "backtest_benchmark"
+harness = false
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
+
+[profile.bench]
+inherits = "release"
