@@ -59,6 +59,9 @@ class BacktestEngine:
         # 策略
         self.strategy = strategy
 
+        # 创建事件队列
+        self.strategy.event_queue = EventQueue()
+
         # 连接组件
         self.strategy.set_data_handler(self.data_handler)
         self.strategy.set_portfolio(self.portfolio)

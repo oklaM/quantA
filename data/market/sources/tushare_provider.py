@@ -3,17 +3,18 @@ Tushare数据源实现
 https://tushare.pro
 """
 
-import pandas as pd
-from typing import Optional, List, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
+import pandas as pd
+
+from config.settings import data as data_config
 from data.market.sources.base_provider import (
     BaseDataProvider,
-    DataProviderError,
     ConnectionError,
     DataNotFoundError,
+    DataProviderError,
 )
-from config.settings import data as data_config
 from utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -36,7 +37,7 @@ class TushareProvider(BaseDataProvider):
         if not self.token:
             raise ValueError("Tushare token未设置，请在配置中设置TUSHARE_TOKEN")
 
-        self._api: Optional[ts.TushareAPI] = None
+        self._api: Optional[Any] = None
 
     def connect(self) -> bool:
         """建立连接"""
@@ -61,7 +62,7 @@ class TushareProvider(BaseDataProvider):
         logger.info("Tushare已断开")
 
     @property
-    def api(self) -> ts.TushareAPI:
+    def api(self) -> Any:
         """获取API实例"""
         if not self.is_connected:
             self.connect()

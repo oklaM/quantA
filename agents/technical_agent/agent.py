@@ -15,6 +15,7 @@ from agents.base.agent_base import (
     tool,
 )
 from backtest.engine.indicators import TechnicalIndicators
+from config.strategies import trading_thresholds
 from utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -171,8 +172,8 @@ class TechnicalAnalysisAgent(LLMAgent):
 
         return {
             "RSI": current_rsi,
-            "overbought": current_rsi > 70,
-            "oversold": current_rsi < 30,
+            "overbought": current_rsi > trading_thresholds.RSI_OVERBOUGHT,
+            "oversold": current_rsi < trading_thresholds.RSI_OVERSOLD,
         }
 
     @tool(name="detect_trend", description="检测价格趋势")
@@ -251,9 +252,9 @@ class TechnicalAnalysisAgent(LLMAgent):
         trend_info = self._detect_trend_dict(data)
         rsi = self.indicators.rsi(data["close"]).iloc[-1]
 
-        if trend_info["trend"] == "uptrend" and rsi < 70:
+        if trend_info["trend"] == "uptrend" and rsi < trading_thresholds.RSI_OVERBOUGHT:
             return "bullish"
-        elif trend_info["trend"] == "downtrend" and rsi > 30:
+        elif trend_info["trend"] == "downtrend" and rsi > trading_thresholds.RSI_OVERSOLD:
             return "bearish"
         else:
             return "neutral"
@@ -271,9 +272,9 @@ class TechnicalAnalysisAgent(LLMAgent):
 
         # RSI信号
         rsi = self.indicators.rsi(data["close"])
-        if rsi.iloc[-1] < 30:
+        if rsi.iloc[-1] < trading_thresholds.RSI_OVERSOLD:
             signals.append({"type": "rsi_oversold", "action": "buy_signal"})
-        elif rsi.iloc[-1] > 70:
+        elif rsi.iloc[-1] > trading_thresholds.RSI_OVERBOUGHT:
             signals.append({"type": "rsi_overbought", "action": "sell_signal"})
 
         return {"signals": signals, "count": len(signals)}

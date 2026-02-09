@@ -4,14 +4,15 @@ quantA 环境检查工具
 检查系统环境、依赖项、配置和资源可用性
 """
 
+import importlib
+import json
 import os
-import sys
 import platform
 import subprocess
-import importlib
+import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
-import json
+
 
 # 颜色输出
 class Colors:

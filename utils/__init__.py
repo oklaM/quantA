@@ -1,9 +1,22 @@
 """
 工具模块
-提供日志、时间处理、辅助函数等
+提供日志、时间处理、辅助函数、错误处理等
 """
 
 import logging
+
+from utils.error_handler import (
+    AgentError,
+    BacktestError,
+    DataError,
+    ErrorHandler,
+    QuantAError,
+    RLError,
+    create_error,
+    format_error_for_api,
+    handle_errors,
+    log_and_raise,
+)
 from utils.helpers import (
     calculate_max_drawdown,
     calculate_returns,
@@ -15,7 +28,7 @@ from utils.helpers import (
     retry_on_exception,
     timing_decorator,
 )
-from utils.logging import get_logger, setup_logger, logger
+from utils.logging import get_logger, logger, setup_logger
 from utils.time_utils import (
     get_current_trading_session,
     get_next_trading_day,
@@ -32,6 +45,17 @@ __all__ = [
     "setup_logger",
     "get_logger",
     "logger",
+    # error_handler
+    "QuantAError",
+    "DataError",
+    "AgentError",
+    "BacktestError",
+    "RLError",
+    "handle_errors",
+    "ErrorHandler",
+    "create_error",
+    "format_error_for_api",
+    "log_and_raise",
     # time_utils
     "is_trading_day",
     "is_trading_time",

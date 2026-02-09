@@ -421,4 +421,87 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
 __all__ = [
     "TechnicalIndicators",
     "add_indicators",
+    "SMA",
+    "EMA",
+    "MACD",
+    "RSI",
+    "BOLLINGER_BANDS",
+    "ATR",
+    "KDJ",
+    "STOCH",
+    "OBV",
 ]
+
+
+# Convenience function wrappers for backward compatibility
+def SMA(series: pd.Series, period: int) -> pd.Series:
+    """Simple Moving Average wrapper"""
+    return TechnicalIndicators.sma(series, period)
+
+
+def EMA(series: pd.Series, period: int) -> pd.Series:
+    """Exponential Moving Average wrapper"""
+    return TechnicalIndicators.ema(series, period)
+
+
+def MACD(
+    series: pd.Series,
+    fast: int = 12,
+    slow: int = 26,
+    signal: int = 9,
+) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """MACD wrapper"""
+    return TechnicalIndicators.macd(series, fast, slow, signal)
+
+
+def RSI(series: pd.Series, period: int = 14) -> pd.Series:
+    """RSI wrapper"""
+    return TechnicalIndicators.rsi(series, period)
+
+
+def BOLLINGER_BANDS(
+    series: pd.Series,
+    period: int = 20,
+    std_dev: float = 2.0,
+) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """Bollinger Bands wrapper"""
+    return TechnicalIndicators.bollinger_bands(series, period, std_dev)
+
+
+def ATR(
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    period: int = 14,
+) -> pd.Series:
+    """ATR wrapper"""
+    return TechnicalIndicators.atr(high, low, close, period)
+
+
+def KDJ(
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    n: int = 9,
+    m1: int = 3,
+    m2: int = 3,
+) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """KDJ wrapper"""
+    return TechnicalIndicators.kdj(high, low, close, n, m1, m2)
+
+
+def STOCH(
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    n: int = 14,
+    m: int = 3,
+) -> Tuple[pd.Series, pd.Series]:
+    """Stochastic wrapper (alias for KDJ with simplified parameters)"""
+    k, d, _ = TechnicalIndicators.kdj(high, low, close, n, m, 1)
+    return k, d
+
+
+def OBV(close: pd.Series, volume: pd.Series) -> pd.Series:
+    """OBV wrapper"""
+    return TechnicalIndicators.obv(close, volume)

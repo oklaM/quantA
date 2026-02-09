@@ -29,6 +29,23 @@ except ImportError:
     PPO = None
     DQN = None
     A2C = None
+    SAC = None
+    TD3 = None
+
+    # Create dummy classes for type annotations
+    class BaseCallback:
+        def __init__(self, verbose=0):
+            self.verbose = verbose
+            self.n_calls = 0
+
+        def _on_step(self) -> bool:
+            return True
+
+    class CallbackList:
+        pass
+
+    class CheckpointCallback:
+        pass
 
 from rl.rewards.reward_functions import BaseRewardFunction, create_reward_function
 from utils.logging import get_logger

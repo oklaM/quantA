@@ -7,7 +7,8 @@ LLM Agent使用示例
 import asyncio
 import json
 from datetime import datetime
-from agents.base.agent_base import LLMAgent, MessageType, Message
+
+from agents.base.agent_base import LLMAgent, Message, MessageType
 from agents.base.glm4_integration import GLM4Client, create_glm_agent
 
 

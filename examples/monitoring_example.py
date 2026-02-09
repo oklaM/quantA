@@ -3,8 +3,8 @@
 展示如何使用监控告警功能
 """
 
-import time
 import random
+import time
 from datetime import datetime, timedelta
 
 try:
@@ -14,15 +14,15 @@ except ImportError:
     REQUESTS_AVAILABLE = False
 
 from monitoring import (
-    AlertManager,
     Alert,
     AlertLevel,
+    AlertManager,
     AlertType,
-    PerformanceMonitor,
-    get_performance_monitor,
-    LogChannel,
     DingTalkChannel,
+    LogChannel,
+    PerformanceMonitor,
     SlackChannel,
+    get_performance_monitor,
 )
 from utils.logging import get_logger
 

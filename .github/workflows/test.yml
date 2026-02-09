@@ -1,0 +1,257 @@
+# quantA 主测试工作流
+# 运行完整的测试套件，包括单元测试、集成测试和覆盖率检查
+
+name: Tests
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:  # 允许手动触发
+
+env:
+  PYTHON_VERSION_DEFAULT: "3.10"
+  COVERAGE_THRESHOLD: 70
+
+jobs:
+  # ========================================
+  # 主测试任务 - 矩阵测试多个Python版本
+  # ========================================
+  test:
+    name: Test Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      # 矩阵策略：测试多个Python版本
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+      # 失败快速：一个版本失败后继续测试其他版本
+      fail-fast: false
+
+    steps:
+      # 1. 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整历史，用于更好的覆盖率分析
+
+      # 2. 设置Python环境
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          # 缓存pip依赖以加速构建
+          cache: 'pip'
+
+      # 3. 安装系统依赖（某些包需要系统库）
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      # 4. 安装Python依赖
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-mock pytest-cov
+
+      # 5. 显示已安装的包版本（用于调试）
+      - name: List installed packages
+        run: |
+          pip list
+          python --version
+
+      # 6. 运行代码格式检查
+      - name: Check code formatting (Black)
+        run: |
+          pip install black
+          black --check --diff .
+
+      # 7. 运行导入排序检查
+      - name: Check import sorting (isort)
+        run: |
+          pip install isort
+          isort --check-only --profile=black .
+
+      # 8. 运行Flake8代码风格检查
+      - name: Lint with Flake8
+        run: |
+          pip install flake8
+          # 停止构建如果有Python语法错误或未定义名称
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # 退出零将其他问题视为警告
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      # 9. 运行类型检查（mypy）
+      - name: Type check with mypy
+        run: |
+          pip install mypy
+          mypy backtest/ rl/ agents/ --ignore-missing-imports || true
+
+      # 10. 设置PYTHONPATH并运行测试
+      - name: Run tests with pytest
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          # 运行所有测试，排除慢速测试和需要外部数据的测试
+          pytest tests/ \
+            -v \
+            --tb=short \
+            --strict-markers \
+            --cov=. \
+            --cov-report=xml \
+            --cov-report=html \
+            --cov-report=term-missing \
+            --cov-fail-under=${{ env.COVERAGE_THRESHOLD }} \
+            -m "not slow and not requires_data and not requires_internet" \
+            --maxfail=5 \
+            --durations=10
+
+      # 11. 上传覆盖率报告到Codecov（可选）
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests-py${{ matrix.python-version }}
+          name: codecov-py${{ matrix.python-version }}
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}  # 可选，用于私有仓库
+
+      # 12. 归档HTML覆盖率报告
+      - name: Archive coverage reports
+        uses: actions/upload-artifact@v4
+        if: always()  # 即使测试失败也上传报告
+        with:
+          name: coverage-report-python-${{ matrix.python-version }}
+          path: htmlcov/
+          retention-days: 30
+
+      # 13. 归档测试结果
+      - name: Archive test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-python-${{ matrix.python-version }}
+          path: |
+            .pytest_cache/
+            .coverage
+          retention-days: 7
+
+  # ========================================
+  # 快速测试任务 - 仅运行单元测试
+  # ========================================
+  test-unit:
+    name: Unit Tests (Quick)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION_DEFAULT }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Run unit tests only
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          pytest tests/ \
+            -v \
+            -m "unit" \
+            --tb=short \
+            --cov=. \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --maxfail=3
+
+  # ========================================
+  # 集成测试任务
+  # ========================================
+  test-integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: test  # 在主测试通过后运行
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION_DEFAULT }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov
+
+      - name: Run integration tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          pytest tests/integration/ \
+            -v \
+            -m "integration and not slow" \
+            --tb=short \
+            --maxfail=3
+
+  # ========================================
+  # 覆盖率汇总任务
+  # ========================================
+  coverage-summary:
+    name: Coverage Summary
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+
+    steps:
+      - name: Check coverage threshold
+        run: |
+          echo "Coverage threshold check completed in test jobs"
+          echo "Minimum required: ${{ env.COVERAGE_THRESHOLD }}%"
+
+      - name: Download all coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-report-python-*
+          path: coverage-reports
+
+      - name: Generate coverage summary
+        run: |
+          echo "Coverage reports collected from all Python versions"
+          ls -R coverage-reports
+
+  # ========================================
+  # 通知任务 - 失败时发送通知
+  # ========================================
+  notify:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [test, test-integration]
+    if: failure()
+
+    steps:
+      - name: Send notification
+        run: |
+          echo "Tests failed! Please check the logs."
+          # 这里可以添加实际的通知逻辑，例如：
+          # - 发送Slack通知
+          # - 发送Email
+          # - 创建GitHub Issue

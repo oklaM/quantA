@@ -3,12 +3,13 @@
 展示如何使用组合回测功能
 """
 
-import numpy as np
-import pandas as pd
 from datetime import datetime, timedelta
 
-from backtest.portfolio import Portfolio, StrategyAllocation, PortfolioBacktestEngine
+import numpy as np
+import pandas as pd
+
 from backtest.engine.strategies import BuyAndHoldStrategy, MovingAverageCrossStrategy
+from backtest.portfolio import Portfolio, PortfolioBacktestEngine, StrategyAllocation
 from utils.logging import get_logger
 
 logger = get_logger(__name__)

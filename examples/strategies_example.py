@@ -4,19 +4,20 @@
 展示如何使用quantA的多种回测策略
 """
 
-import pandas as pd
-import numpy as np
 from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
 
 from backtest.engine.backtest import BacktestEngine, run_backtest
 from backtest.engine.strategies import (
     BollingerBandsStrategy,
-    MACDStrategy,
-    RSIStrategy,
     BreakoutStrategy,
     DualThrustStrategy,
     GridTradingStrategy,
+    MACDStrategy,
     MomentumStrategy,
+    RSIStrategy,
 )
 from backtest.engine.strategy import BuyAndHoldStrategy, MovingAverageCrossStrategy
 

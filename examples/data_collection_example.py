@@ -4,11 +4,13 @@
 本示例展示如何使用quantA的数据采集系统获取真实市场数据
 """
 
-import pandas as pd
 from datetime import datetime, timedelta
-from data.market.sources.tushare_provider import TushareProvider
-from data.market.sources.akshare_provider import AKShareProvider
+
+import pandas as pd
+
 from data.market.collector import DataCollector, create_collector
+from data.market.sources.akshare_provider import AKShareProvider
+from data.market.sources.tushare_provider import TushareProvider
 from utils.logging import get_logger
 
 logger = get_logger(__name__)

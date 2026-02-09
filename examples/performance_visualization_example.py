@@ -3,9 +3,10 @@
 展示如何使用可视化模块创建各种图表
 """
 
+from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
 
 try:
     import matplotlib.pyplot as plt
@@ -21,9 +22,9 @@ except ImportError:
     PLOTLY_AVAILABLE = False
     print("警告: plotly未安装")
 
-from backtest.visualization import PerformanceVisualizer, InteractiveVisualizer
-from backtest.engine.strategies import BuyAndHoldStrategy
 from backtest.engine.engine import BacktestEngine
+from backtest.engine.strategies import BuyAndHoldStrategy
+from backtest.visualization import InteractiveVisualizer, PerformanceVisualizer
 from utils.logging import get_logger
 
 logger = get_logger(__name__)

@@ -11,6 +11,7 @@ from agents.base.agent_base import (
     Tool,
     tool,
 )
+from agents.base.agent_template import TemplateAgent
 from agents.base.coordinator import (
     AgentCoordinator,
     Workflow,
@@ -22,6 +23,7 @@ __all__ = [
     "MessageQueue",
     "Agent",
     "LLMAgent",
+    "TemplateAgent",
     "Tool",
     "tool",
     "AgentCoordinator",

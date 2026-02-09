@@ -4,15 +4,16 @@ https://akshare.akfamily.xyz
 AKShare是一个免费、开源的财经数据接口库
 """
 
-import pandas as pd
-from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
 
 from data.market.sources.base_provider import (
     BaseDataProvider,
-    DataProviderError,
     ConnectionError,
     DataNotFoundError,
+    DataProviderError,
 )
 from utils.logging import get_logger
 

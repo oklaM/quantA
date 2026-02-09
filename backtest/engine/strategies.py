@@ -60,7 +60,7 @@ class BollingerBandsStrategy(Strategy):
 
         # 计算布林带
         prices = pd.Series(self.price_history)
-        middle = prices.rolling(window=self.period).iloc[-1]
+        middle = prices.rolling(window=self.period).mean().iloc[-1]
         std = prices.rolling(window=self.period).std().iloc[-1]
 
         upper = middle + self.std_dev * std

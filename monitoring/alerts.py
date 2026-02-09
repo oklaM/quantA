@@ -3,17 +3,17 @@
 提供实时监控、异常检测和多渠道告警功能
 """
 
-from typing import Dict, List, Optional, Any, Callable, Union
-from enum import Enum
+import json
+import queue
+import smtplib
+import threading
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-import json
-import smtplib
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import threading
-import queue
-import time
+from email.mime.text import MIMEText
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Union
 
 try:
     import requests

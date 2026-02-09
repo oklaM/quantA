@@ -10,15 +10,16 @@
 6. 模型推理和部署
 """
 
+import json
+from datetime import datetime, timedelta
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from pathlib import Path
-from datetime import datetime, timedelta
-import json
 
 try:
     import gymnasium as gym
-    from stable_baselines3 import PPO, DQN
+    from stable_baselines3 import DQN, PPO
     from stable_baselines3.common.vec_env import DummyVecEnv
     SB3_AVAILABLE = True
 except ImportError:
@@ -26,9 +27,9 @@ except ImportError:
     print("警告: stable_baselines3未安装，请运行: pip install stable-baselines3 gymnasium")
 
 from rl.envs.a_share_trading_env import ASharesTradingEnv
-from rl.training.trainer import RLTrainer, create_trainer
-from rl.evaluation.model_evaluator import ModelEvaluator, ModelComparator
+from rl.evaluation.model_evaluator import ModelComparator, ModelEvaluator
 from rl.rewards.reward_functions import create_reward_function
+from rl.training.trainer import RLTrainer, create_trainer
 from utils.logging import get_logger
 
 logger = get_logger(__name__)

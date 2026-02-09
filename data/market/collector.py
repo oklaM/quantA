@@ -3,16 +3,17 @@
 负责从数据源采集数据并存储到时序数据库
 """
 
-from typing import Optional, List
-import pandas as pd
 from datetime import datetime, timedelta
+from typing import List, Optional
 
-from data.market.storage.timeseries_db import get_timeseries_db, TABLE_SCHEMAS
-from data.market.sources.tushare_provider import TushareProvider
-from data.market.sources.akshare_provider import AKShareProvider
+import pandas as pd
+
 from config.settings import data as data_config
+from data.market.sources.akshare_provider import AKShareProvider
+from data.market.sources.tushare_provider import TushareProvider
+from data.market.storage.timeseries_db import TABLE_SCHEMAS, get_timeseries_db
 from utils.logging import get_logger
-from utils.time_utils import is_trading_day, get_previous_trading_day
+from utils.time_utils import get_previous_trading_day, is_trading_day
 
 logger = get_logger(__name__)
 

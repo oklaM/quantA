@@ -1,0 +1,377 @@
+# quantA 发布工作流
+# 当创建git tag时自动构建和发布Release
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # 触发条件：推送以v开头的tag，如v1.0.0
+  workflow_dispatch:  # 允许手动触发
+
+env:
+  PYTHON_VERSION: "3.10"
+
+jobs:
+  # ========================================
+  # 构建和测试发布包
+  # ========================================
+  build:
+    name: Build Distribution
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整历史
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build wheel twine setuptools
+
+      - name: Create setup.py if not exists
+        run: |
+          if [ ! -f setup.py ]; then
+            echo "Creating setup.py..."
+            cat > setup.py << 'EOF'
+          from setuptools import setup, find_packages
+
+          with open("README.md", "r", encoding="utf-8") as fh:
+              long_description = fh.read()
+
+          setup(
+              name="quanta",
+              use_scm_version=True,
+              author="quantA Team",
+              description="A股量化AI交易系统",
+              long_description=long_description,
+              long_description_content_type="text/markdown",
+              packages=find_packages(exclude=["tests", "tests.*", "examples", "docs"]),
+              classifiers=[
+                  "Development Status :: 4 - Beta",
+                  "Intended Audience :: Financial and Insurance Industry",
+                  "Topic :: Office/Business :: Financial :: Investment",
+                  "License :: OSI Approved :: MIT License",
+                  "Programming Language :: Python :: 3",
+                  "Programming Language :: Python :: 3.9",
+                  "Programming Language :: Python :: 3.10",
+                  "Programming Language :: Python :: 3.11",
+              ],
+              python_requires=">=3.9",
+              install_requires=[
+                  "pandas>=2.0.0",
+                  "numpy>=1.24.0",
+                  "scipy>=1.10.0",
+              ],
+              extras_require={
+                  "dev": ["pytest", "pytest-cov", "black", "isort", "flake8", "mypy"],
+              },
+          )
+          EOF
+          fi
+
+      - name: Create pyproject.toml if not exists
+        run: |
+          if [ ! -f pyproject.toml ]; then
+            echo "Creating pyproject.toml..."
+            cat > pyproject.toml << 'EOF'
+          [build-system]
+          requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+          build-backend = "setuptools.build_meta"
+
+          [project]
+          name = "quanta"
+          dynamic = ["version"]
+          description = "A股量化AI交易系统"
+          readme = "README.md"
+          requires-python = ">=3.9"
+          license = {text = "MIT"}
+          authors = [
+              {name = "quantA Team"}
+          ]
+          classifiers = [
+              "Development Status :: 4 - Beta",
+              "Intended Audience :: Financial and Insurance Industry",
+              "Topic :: Office/Business :: Financial :: Investment",
+              "License :: OSI Approved :: MIT License",
+              "Programming Language :: Python :: 3",
+              "Programming Language :: Python :: 3.9",
+              "Programming Language :: Python :: 3.10",
+              "Programming Language :: Python :: 3.11",
+          ]
+
+          [project.urls]
+          Homepage = "https://github.com/yourusername/quanta"
+          Documentation = "https://quanta.readthedocs.io"
+          Repository = "https://github.com/yourusername/quanta"
+          EOF
+          fi
+
+      - name: Build distribution packages
+        run: |
+          python -m build
+
+      - name: Check distribution packages
+        run: |
+          twine check dist/*
+
+      - name: List built packages
+        run: |
+          ls -lh dist/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-packages
+          path: dist/
+          retention-days: 30
+
+  # ========================================
+  # 运行发布前的完整测试
+  # ========================================
+  test-release:
+    name: Test Release Build
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-packages
+          path: dist/
+
+      - name: Install built package
+        run: |
+          pip install dist/*.whl
+
+      - name: Verify installation
+        run: |
+          python -c "import sys; print(f'Python: {sys.version}')"
+          # 尝试导入主要模块（如果已安装）
+          python -c "print('Package installed successfully')" || true
+
+  # ========================================
+  # 创建GitHub Release
+  # ========================================
+  github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build, test-release]
+    permissions:
+      contents: write  # 需要写入权限来创建release
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-packages
+          path: dist/
+
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Release version: $VERSION"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # 生成简单的changelog（基于git commits）
+          echo "## Changes in ${{ steps.get_version.outputs.VERSION }}" > changelog.md
+          echo "" >> changelog.md
+          echo "### What's Changed" >> changelog.md
+          echo "" >> changelog.md
+          git log --pretty=format:"- %s (%h)" $(git describe --tags --abbrev=0 HEAD^)..HEAD >> changelog.md || echo "No changes found" >> changelog.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ steps.get_version.outputs.VERSION }}
+          body_path: changelog.md
+          draft: false
+          prerelease: false
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update release summary
+        run: |
+          echo "## Release Created Successfully :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Released Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ls -lh dist/ >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  # ========================================
+  # 发布到PyPI（可选）
+  # ========================================
+  pypi-release:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: [build, test-release]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: pypi
+      url: https://pypi.org/p/quanta
+
+    permissions:
+      id-token: write  # 必需，用于trusted publishing
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-packages
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true
+          verbose: true
+
+      # 或者使用Trusted Publishers（推荐）
+      # - name: Publish to PyPI (Trusted Publishers)
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+
+  # ========================================
+  # 发布到TestPyPI（测试）
+  # ========================================
+  testpypi-release:
+    name: Publish to TestPyPI
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-packages
+          path: dist/
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          skip-existing: true
+          verbose: true
+
+  # ========================================
+  # 构建Docker镜像（可选）
+  # ========================================
+  docker-release:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: [build, test-release]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/quanta:latest
+            ${{ secrets.DOCKER_USERNAME }}/quanta:${{ steps.get_version.outputs.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Update Docker release summary
+        run: |
+          echo "### Docker Images Published :whale:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- ${{ secrets.DOCKER_USERNAME }}/quanta:latest" >> $GITHUB_STEP_SUMMARY
+          echo "- ${{ secrets.DOCKER_USERNAME }}/quanta:${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+
+  # ========================================
+  # 发布通知
+  # ========================================
+  notify-release:
+    name: Send Release Notification
+    runs-on: ubuntu-latest
+    needs: [github-release, pypi-release, docker-release]
+    if: always()
+
+    steps:
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Send notification
+        run: |
+          echo "## Release Notification :bell:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Release ${{ steps.get_version.outputs.VERSION }} has been published!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Status" >> $GITHUB_STEP_SUMMARY
+          echo "| Task | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| GitHub Release | ${{ needs.github-release.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PyPI Release | ${{ needs.pypi-release.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Docker Release | ${{ needs.docker-release.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # 这里可以添加实际的通知逻辑
+          # 例如：发送Slack通知、Email等
+          # curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} -d "text quantA ${{ steps.get_version.outputs.VERSION }} released!"

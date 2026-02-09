@@ -374,7 +374,14 @@ __all__ = [
     "Message",
     "MessageQueue",
     "Agent",
+    "AgentBase",  # Alias for Agent
     "LLMAgent",
+    "AgentResponse",  # Alias for Message (for backward compatibility)
     "Tool",
     "tool",
 ]
+
+
+# Backward compatibility aliases
+AgentBase = Agent  # Alias for tests that expect AgentBase
+AgentResponse = Message  # Alias for tests that expect AgentResponse

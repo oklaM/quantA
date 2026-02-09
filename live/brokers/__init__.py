@@ -5,14 +5,14 @@
 """
 
 from live.brokers.xtp_broker import (
-    OrderType,
     OrderSide,
     OrderStatus,
-    XTPOrder,
-    XTPPosition,
+    OrderType,
+    SimulatedXTPBroker,
     XTPAccount,
     XTPBroker,
-    SimulatedXTPBroker,
+    XTPOrder,
+    XTPPosition,
     create_xtp_broker,
 )
 

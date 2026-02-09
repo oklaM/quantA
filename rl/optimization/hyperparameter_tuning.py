@@ -37,6 +37,15 @@ try:
 except ImportError:
     SB3_AVAILABLE = False
 
+    # Create a dummy BaseCallback for type annotations
+    class BaseCallback:
+        def __init__(self, verbose=0):
+            self.verbose = verbose
+            self.n_calls = 0
+
+        def _on_step(self) -> bool:
+            return True
+
 from utils.logging import get_logger
 
 logger = get_logger(__name__)

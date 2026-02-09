@@ -4,32 +4,33 @@ RL模型大规模训练示例
 展示如何进行大规模强化学习模型训练
 """
 
-import numpy as np
-import pandas as pd
-from pathlib import Path
-from datetime import datetime, timedelta
 import json
 import multiprocessing as mp
-from typing import Dict, Any, List
 import time
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List
+
+import numpy as np
+import pandas as pd
 
 try:
     import gymnasium as gym
-    from stable_baselines3 import PPO, DQN, A2C
-    from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
+    import matplotlib.pyplot as plt
+    from stable_baselines3 import A2C, DQN, PPO
     from stable_baselines3.common.callbacks import BaseCallback, CheckpointCallback, EvalCallback
     from stable_baselines3.common.monitor import Monitor
     from stable_baselines3.common.results_plotter import load_results, ts2xy
-    import matplotlib.pyplot as plt
+    from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
     SB3_AVAILABLE = True
 except ImportError:
     SB3_AVAILABLE = False
     print("警告: stable-baselines3未安装")
 
 from rl.envs.a_share_trading_env import ASharesTradingEnv
-from rl.training.trainer import RLTrainer
-from rl.evaluation.model_evaluator import ModelEvaluator, ModelComparator
+from rl.evaluation.model_evaluator import ModelComparator, ModelEvaluator
 from rl.models.model_manager import ModelManager
+from rl.training.trainer import RLTrainer
 from utils.logging import get_logger
 
 logger = get_logger(__name__)

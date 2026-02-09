@@ -4,13 +4,14 @@
 展示如何使用RL环境训练和测试交易策略
 """
 
+from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
 
 try:
     import gymnasium as gym
-    from stable_baselines3 import PPO, DQN, A2C
+    from stable_baselines3 import A2C, DQN, PPO
     from stable_baselines3.common.vec_env import DummyVecEnv
     SB3_AVAILABLE = True
 except ImportError:

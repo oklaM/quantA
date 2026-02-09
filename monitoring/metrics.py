@@ -3,13 +3,13 @@
 提供实时指标收集、分析和异常检测功能
 """
 
-from typing import Dict, List, Optional, Any, Callable
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from collections import deque
 import statistics
 import threading
 import time
+from collections import deque
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from typing import Any, Callable, Dict, List, Optional
 
 try:
     import numpy as np

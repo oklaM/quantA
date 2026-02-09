@@ -18,9 +18,9 @@ from agents.collaboration import AgentOrchestrator
 # 需要测试的完整流程
 from backtest.engine import BacktestEngine
 from backtest.engine.analysis import PerformanceAnalyzer
-from backtest.engine.optimization import GridSearchOptimizer
 from backtest.engine.strategies import BuyAndHoldStrategy
 from backtest.engine.strategy import MovingAverageCrossStrategy
+from backtest.optimization import GridSearchOptimizer
 from monitoring import Alert, AlertLevel, AlertManager, AlertType
 from rl.envs.a_share_trading_env import ASharesTradingEnv
 from rl.training.trainer import RLTrainer
@@ -388,7 +388,9 @@ class TestEndToEndDataPipeline:
 
         # 验证特征已添加
         assert "returns" in feature_data.columns
-        assert "sma_20" in feature_data.columns or len(feature_data) < 20  # 可能数据不足
+        assert (
+            "sma_20" in feature_data.columns or len(feature_data) < 20
+        )  # 可能数据不足
 
         # 4. 数据分割
         train_size = int(len(feature_data) * 0.8)
@@ -478,7 +480,11 @@ class TestCompleteTradingWorkflow:
         context = {
             "account": {"total_asset": 1000000, "available_cash": 500000},
             "positions": [],
-            "daily_stats": {"initial_asset": 1000000, "traded_volume": 0, "daily_pnl": 0},
+            "daily_stats": {
+                "initial_asset": 1000000,
+                "traded_volume": 0,
+                "daily_pnl": 0,
+            },
         }
 
         allowed, _ = controller.validate_order(

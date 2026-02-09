@@ -4,7 +4,7 @@
 """
 
 from datetime import datetime, time, timedelta
-from typing import List, Optional, Set
+from typing import List, Optional, Set, Union
 
 import pandas as pd
 
@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 _trading_days_cache: Optional[Set[pd.Timestamp]] = None
 
 
-def is_trading_day(date: pd.Timestamp | datetime | str) -> bool:
+def is_trading_day(date: Union[pd.Timestamp, datetime, str]) -> bool:
     """
     判断是否为交易日
 
@@ -74,8 +74,8 @@ def is_trading_time(dt: Optional[datetime] = None) -> bool:
 
 
 def get_trading_days(
-    start_date: str | datetime | pd.Timestamp,
-    end_date: str | datetime | pd.Timestamp,
+    start_date: Union[str, datetime, pd.Timestamp],
+    end_date: Union[str, datetime, pd.Timestamp],
 ) -> List[pd.Timestamp]:
     """
     获取日期范围内的所有交易日
@@ -102,7 +102,7 @@ def get_trading_days(
 
 
 def get_previous_trading_day(
-    date: str | datetime | pd.Timestamp,
+    date: Union[str, datetime, pd.Timestamp],
     n: int = 1,
 ) -> pd.Timestamp:
     """
@@ -127,7 +127,7 @@ def get_previous_trading_day(
 
 
 def get_next_trading_day(
-    date: str | datetime | pd.Timestamp,
+    date: Union[str, datetime, pd.Timestamp],
     n: int = 1,
 ) -> pd.Timestamp:
     """
@@ -151,7 +151,7 @@ def get_next_trading_day(
     return dt
 
 
-def get_trading_sessions(date: str | datetime | pd.Timestamp) -> List[tuple]:
+def get_trading_sessions(date: Union[str, datetime, pd.Timestamp]) -> List[tuple]:
     """
     获取指定日期的交易时段
 
@@ -168,7 +168,9 @@ def get_trading_sessions(date: str | datetime | pd.Timestamp) -> List[tuple]:
 
     morning_start = datetime.combine(dt, pd.to_datetime(market.MORNING_START).time())
     morning_end = datetime.combine(dt, pd.to_datetime(market.MORNING_END).time())
-    afternoon_start = datetime.combine(dt, pd.to_datetime(market.AFTERNOON_START).time())
+    afternoon_start = datetime.combine(
+        dt, pd.to_datetime(market.AFTERNOON_START).time()
+    )
     afternoon_end = datetime.combine(dt, pd.to_datetime(market.AFTERNOON_END).time())
 
     return [
@@ -199,7 +201,7 @@ def get_current_trading_session(dt: Optional[datetime] = None) -> Optional[tuple
     return None
 
 
-def time_to_seconds(t: time | str) -> int:
+def time_to_seconds(t: Union[time, str]) -> int:
     """
     将时间转换为当天的秒数
 
@@ -305,7 +307,7 @@ HOLIDAYS_2024 = [
 ]
 
 
-def is_holiday(date: pd.Timestamp | datetime | str) -> bool:
+def is_holiday(date: Union[pd.Timestamp, datetime, str]) -> bool:
     """
     判断是否为节假日
 

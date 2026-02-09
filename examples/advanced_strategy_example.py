@@ -3,14 +3,15 @@
 展示如何结合多个技术指标构建复杂的交易策略
 """
 
-import pandas as pd
-import numpy as np
 from datetime import datetime, timedelta
 
+import numpy as np
+import pandas as pd
+
 from backtest.engine.backtest import BacktestEngine
-from backtest.engine.strategy import Strategy
 from backtest.engine.event_engine import BarEvent, OrderEvent
 from backtest.engine.indicators import TechnicalIndicators
+from backtest.engine.strategy import Strategy
 from utils import logger
 
 
@@ -60,6 +61,8 @@ class MultiFactorStrategy(Strategy):
         # 价格历史
         self.price_history = []
         self.volume_history = []
+        self.high_history = []
+        self.low_history = []
 
         # 技术指标
         self.indicators = TechnicalIndicators()
@@ -76,6 +79,8 @@ class MultiFactorStrategy(Strategy):
         # 更新历史数据
         self.price_history.append(event.close)
         self.volume_history.append(event.volume)
+        self.high_history.append(event.high)
+        self.low_history.append(event.low)
 
         # 需要足够的历史数据
         min_period = max(self.long_ma, self.rsi_period, self.atr_period, self.volume_period)
@@ -94,8 +99,8 @@ class MultiFactorStrategy(Strategy):
         rsi = self.indicators.rsi(prices, period=self.rsi_period).iloc[-1]
 
         # ATR（波动率）
-        high_series = pd.Series([bar.high for bar in self.bars if bar.symbol == self.symbol][-len(prices):])
-        low_series = pd.Series([bar.low for bar in self.bars if bar.symbol == self.symbol][-len(prices):])
+        high_series = pd.Series(self.high_history)
+        low_series = pd.Series(self.low_history)
         atr = self.indicators.atr(high_series, low_series, prices, period=self.atr_period).iloc[-1]
 
         # 成交量均值
@@ -241,13 +246,13 @@ def example_1_multi_factor_strategy():
     logger.info("回测结果")
     logger.info("=" * 60)
     logger.info(f"初始资金: ¥{1_000_000:,.2f}")
-    logger.info(f"最终资金: ¥{results['final_value']:,.2f}")
-    logger.info(f"总收益: ¥{results['total_return']:,.2f}")
-    logger.info(f"收益率: {results['total_return_pct']:.2f}%")
-    logger.info(f"总交易次数: {results['total_trades']}")
-    logger.info(f"胜率: {results['win_rate']:.2f}%")
-    logger.info(f"最大回撤: {results['max_drawdown']:.2f}%")
-    logger.info(f"夏普比率: {results.get('sharpe_ratio', 'N/A')}")
+    logger.info(f"最终资金: ¥{results['account']['total_value']:,.2f}")
+    logger.info(f"总收益: ¥{results['account']['total_return']:,.2f}")
+    logger.info(f"收益率: {results['account']['total_return_pct']:.2f}%")
+    logger.info(f"总交易次数: {results['account']['total_trades']}")
+    logger.info(f"胜率: N/A%")  # TODO: 需要实现胜率计算
+    logger.info(f"最大回撤: {results['performance']['max_drawdown']:.2f}%")
+    logger.info(f"夏普比率: {results['performance']['sharpe_ratio']}")
 
     return results
 
@@ -310,20 +315,20 @@ def example_2_parameter_optimization():
                     results = engine.run()
 
                     # 记录最佳参数
-                    if results['total_return_pct'] > best_return:
-                        best_return = results['total_return_pct']
+                    if results['account']['total_return_pct'] > best_return:
+                        best_return = results['account']['total_return_pct']
                         best_params = {
                             'short_ma': short_ma,
                             'long_ma': long_ma,
                             'rsi_period': rsi_period,
                             'stop_loss': stop_loss,
-                            'return': results['total_return_pct']
+                            'return': results['account']['total_return_pct']
                         }
 
                     logger.info(
                         f"[{count}/{total_combinations}] "
                         f"MA({short_ma},{long_ma}) RSI({rsi_period}) "
-                        f"止损={stop_loss*100:.0f}% -> 收益率={results['total_return_pct']:.2f}%"
+                        f"止损={stop_loss*100:.0f}% -> 收益率={results['account']['total_return_pct']:.2f}%"
                     )
 
     logger.info("\n" + "=" * 60)
@@ -388,8 +393,8 @@ def example_3_walk_forward_analysis():
                 )
                 results = engine.run()
 
-                if results['total_return_pct'] > best_return:
-                    best_return = results['total_return_pct']
+                if results['account']['total_return_pct'] > best_return:
+                    best_return = results['account']['total_return_pct']
                     best_params = {'short_ma': short_ma, 'long_ma': long_ma}
 
         # 在测试集上验证
@@ -410,14 +415,14 @@ def example_3_walk_forward_analysis():
         )
         test_results = engine.run()
 
-        logger.info(f"测试期收益率: {test_results['total_return_pct']:.2f}%")
+        logger.info(f"测试期收益率: {test_results['account']['total_return_pct']:.2f}%")
 
         results_list.append({
             'train_start': train_data['date'].iloc[0].date(),
             'test_start': test_data['date'].iloc[0].date(),
             'params': best_params,
             'train_return': best_return,
-            'test_return': test_results['total_return_pct']
+            'test_return': test_results['account']['total_return_pct']
         })
 
     # 总结

@@ -3,9 +3,10 @@
 展示如何使用优化框架进行策略参数和超参数调优
 """
 
+from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
 
 try:
     import optuna
@@ -14,14 +15,14 @@ except ImportError:
     OPTUNA_AVAILABLE = False
     print("警告: optuna未安装，部分功能不可用。安装命令: pip install optuna")
 
+from backtest.engine.strategies import BollingerBandsStrategy
 from backtest.optimization import (
-    GridSearchOptimizer,
-    RandomSearchOptimizer,
     BayesianOptimizer,
+    GridSearchOptimizer,
     MultiObjectiveOptimizer,
+    RandomSearchOptimizer,
     create_optimizer,
 )
-from backtest.engine.strategies import BollingerBandsStrategy
 from utils.logging import get_logger
 
 logger = get_logger(__name__)

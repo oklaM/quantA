@@ -38,6 +38,54 @@ class TechnicalIndicatorsConfig:
 
 
 @dataclass
+class TradingThresholds:
+    """交易阈值常量"""
+
+    # RSI阈值
+    RSI_OVERBOUGHT = 70  # RSI超买阈值
+    RSI_OVERSOLD = 30  # RSI超卖阈值
+    RSI_NEUTRAL_MIN = 40  # RSI中性区间下限
+    RSI_NEUTRAL_MAX = 60  # RSI中性区间上限
+
+    # MACD阈值
+    MACD_HISTOGRAM_THRESHOLD = 0.0  # MACD柱状图零轴
+    MACD_SIGNAL_STRENGTH = 0.5  # MACD信号强度阈值
+
+    # 布林带参数
+    BOLLINGER_STD_MULTIPLIER = 2.0  # 布林带标准差倍数
+    BOLLINGER_SQUEEZE_THRESHOLD = 0.5  # 布林带收缩阈值
+
+    # 统计阈值
+    STD_DEV_MULTIPLIER = 3.0  # 标准差倍数（用于异常值检测）
+    ZSCORE_THRESHOLD = 2.0  # Z-score阈值（用于均值回归）
+
+    # 价格变动阈值
+    PRICE_CHANGE_MIN = 0.01  # 最小价格变动（1%）
+    PRICE_CHANGE_SIGNIFICANT = 0.03  # 显著价格变动（3%）
+    PRICE_CHANGE_MAJOR = 0.05  # 重大价格变动（5%）
+
+    # 成交量阈值
+    VOLUME_SPIKE_MULTIPLIER = 2.0  # 成交量突增倍数
+    VOLUME_DRYUP_RATIO = 0.5  # 成交量萎缩比例
+
+    # 信号置信度等级
+    CONFIDENCE_HIGH = 0.8  # 高置信度
+    CONFIDENCE_MEDIUM = 0.6  # 中等置信度
+    CONFIDENCE_LOW = 0.4  # 低置信度
+
+    # 趋势强度阈值
+    TREND_STRONG = 0.7  # 强趋势阈值
+    TREND_WEAK = 0.3  # 弱趋势阈值
+
+    # 支撑阻力位阈值
+    SUPPORT_RESISTANCE_PROXIMITY = 0.02  # 支撑阻力位接近阈值（2%）
+
+    # 波动率阈值
+    VOLATILITY_LOW = 0.01  # 低波动率
+    VOLATILITY_HIGH = 0.03  # 高波动率
+
+
+@dataclass
 class LLMAgentConfig:
     """LLM Agent配置"""
 
@@ -195,6 +243,7 @@ STRATEGY_CONFIGS: Dict[str, Dict] = {
 
 # 配置实例
 technical = TechnicalIndicatorsConfig()
+trading_thresholds = TradingThresholds()
 llm_agent = LLMAgentConfig()
 rl_strategy = RLStrategyConfig()
 backtest = BacktestConfig()
@@ -203,12 +252,14 @@ trading = TradingConfig()
 
 __all__ = [
     "TechnicalIndicatorsConfig",
+    "TradingThresholds",
     "LLMAgentConfig",
     "RLStrategyConfig",
     "BacktestConfig",
     "TradingConfig",
     "STRATEGY_CONFIGS",
     "technical",
+    "trading_thresholds",
     "llm_agent",
     "rl_strategy",
     "backtest",

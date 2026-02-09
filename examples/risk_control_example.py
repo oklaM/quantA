@@ -3,16 +3,16 @@
 展示如何使用风控系统进行实盘交易风险控制
 """
 
+from monitoring import Alert, AlertLevel, AlertManager, AlertType
 from trading.risk import (
-    RiskController,
-    OrderRequest,
     ActionType,
-    RiskRuleType,
     BaseRiskRule,
+    OrderRequest,
     RiskCheckResult,
+    RiskController,
     RiskLevel,
+    RiskRuleType,
 )
-from monitoring import AlertManager, Alert, AlertType, AlertLevel
 from utils.logging import get_logger
 
 logger = get_logger(__name__)

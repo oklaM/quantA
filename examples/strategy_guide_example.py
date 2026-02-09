@@ -4,23 +4,25 @@ quantA策略使用指南示例
 """
 
 import sys
+
 sys.path.insert(0, '/home/rowan/Projects/quantA')
 
-import pandas as pd
-import numpy as np
 from datetime import datetime, timedelta
 
+import numpy as np
+import pandas as pd
+
 from backtest.engine.backtest import BacktestEngine
-from backtest.engine.strategy import BuyAndHoldStrategy, MovingAverageCrossStrategy
+from backtest.engine.data_handler import SimpleDataHandler
+from backtest.engine.execution import SimulationExecutionHandler
+from backtest.engine.portfolio import Portfolio
 from backtest.engine.strategies import (
     BollingerBandsStrategy,
+    BreakoutStrategy,
     MACDStrategy,
     RSIStrategy,
-    BreakoutStrategy,
 )
-from backtest.engine.portfolio import Portfolio
-from backtest.engine.execution import SimulationExecutionHandler
-from backtest.engine.data_handler import SimpleDataHandler
+from backtest.engine.strategy import BuyAndHoldStrategy, MovingAverageCrossStrategy
 from utils import logger
 
 
